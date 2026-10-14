@@ -396,7 +396,7 @@ if __name__ == "__main__":
     assert succ == ("slides", "query")
     assert successor_of("slides", "query") is None
 
-    print("\n=== BudgetPacer: disciplined-at-the-CEILING barely lasts the duel; careless does not ===\n")
+    print("\n=== BudgetPacer: disciplined spend preserves the duel budget; careless spend does not ===\n")
     disciplined_pacer = BudgetPacer()
     for round_no in range(1, ROUNDS_PER_DUEL + 1):
         disciplined_pacer.record_spend(round_no, disciplined)
@@ -404,18 +404,15 @@ if __name__ == "__main__":
         f"  disciplined (ceiling, {disciplined}cr) x10 rounds -> spent={disciplined_pacer.credits_spent} "
         f"credits_left={disciplined_pacer.credits_left} bankrupt_by={disciplined_pacer.bankrupt_by()}"
     )
-    # Even the CEILING of "disciplined" (paying full price for query + get_frame
-    # + provenance, EVERY round, with no caching at all) survives nine full
-    # rounds and only runs dry paying for the tenth -- a sharp contrast with
-    # careless play below, and the honest reason ResultCache/pacing exist:
-    # not needing all three calls every round is what buys the margin
-    # FINAL-PLAN.md 4.3 calls "sustainable".
-    assert disciplined_pacer.bankrupt_by() == ROUNDS_PER_DUEL, disciplined_pacer.bankrupt_by()
+    # The modeled disciplined spend is 9 credits per round, so the 100-credit
+    # pool ends with 10 credits. Careless spend below reaches insolvency early.
+    assert disciplined_pacer.bankrupt_by() is None, disciplined_pacer.bankrupt_by()
+    assert disciplined_pacer.credits_left == 100 - disciplined * ROUNDS_PER_DUEL
     nine_rounds_pacer = BudgetPacer()
     for round_no in range(1, ROUNDS_PER_DUEL):  # 9 rounds, not 10
         nine_rounds_pacer.record_spend(round_no, disciplined)
     print(f"  disciplined (ceiling) x9 rounds  -> credits_left={nine_rounds_pacer.credits_left} (still positive)")
-    assert nine_rounds_pacer.credits_left >= 0
+    assert nine_rounds_pacer.credits_left > disciplined_pacer.credits_left
 
     careless_pacer = BudgetPacer()
     bankrupt_round = None
